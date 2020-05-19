@@ -1,0 +1,74 @@
+import pandas as pd
+import numpy as np
+import sys
+
+
+df = pd.DataFrame()
+
+df['MANGERID'] = ['Ranga','Sridhar','Rajkumar','Rajkumar','Hathi','Ranga','Hathi','Sridhar','Sridhar','Monee','Sridhar','Sridhar','Vijay']
+df['EMPID'] =    ['Sridhar','Rajkumar','Hathi','Jo',       'Monee','Nish','Eniya','Ramya','Vijay','Ajith','Suriya','Kamal','Vicky']
+
+level = 1
+hierarcyTable = pd.DataFrame()
+managerid = []
+deepHierarcyList = []
+
+
+def mngrEmp(eid,managerid,level):
+   
+    global hierarcyTable
+    global deepHierarcyTable
+    mngrEmp.deepHierarcyList = []
+   
+    dict_ = {'MANGERID':managerid,'EMPID':eid,'Level':[level]}
+    data = pd.DataFrame(dict_)
+
+    hierarcyTable = hierarcyTable.append(data,ignore_index=True)
+    if len(df[df['MANGERID'] == eid]['EMPID'].values):
+        (mngrEmp.deepHierarcyList).append(list(df[df['MANGERID'] == eid]['EMPID'].values))
+
+    return mngrEmp.deepHierarcyList,hierarcyTable
+
+def recrHierarcyFunc(deepHierarcyList,managerid,level):
+    lst = []
+    for deepid in deepHierarcyList:
+        for id in deepid:
+            deepHierarcyList, recrHierarcyFunc.hierarcyTable = mngrEmp(id,managerid,level)
+            lst.append(deepHierarcyList)
+    if lst:
+        level+=1
+        for id in lst:
+            recrHierarcyFunc(id,managerid,level)
+   
+    return recrHierarcyFunc.hierarcyTable
+ 
+def main(manid):
+    mask = np.column_stack([df[col].str.contains(manid, na=False) for col in df])
+    mangerTable = df.loc[mask.any(axis=1)]
+    mangerTable = mangerTable[mangerTable['MANGERID'] == manid]
+    if len(mangerTable) == 0:
+        sys.exit("No employee is reporting under {0}".format(manid))
+   
+    managerid.append(manid)
+   
+    global level
+    global hierarcyTable
+    global deepHierarcyTable
+    global deepHierarcyList
+   
+    for eid in set(mangerTable['EMPID']):
+        dict_ = {'MANGERID':managerid[0],'EMPID':eid,'Level':[level]}
+        data = pd.DataFrame(dict_)
+        hierarcyTable = hierarcyTable.append(data,ignore_index=True)
+        #deepHierarcyTable = deepHierarcyTable+len(df[df['MANGERID'] == eid]['EMPID'].values)
+        if len(df[df['MANGERID'] == eid]['EMPID'].values):
+            deepHierarcyList.append(list(df[df['MANGERID'] == eid]['EMPID'].values))
+    level+=1
+    if deepHierarcyList:
+        hierarcyTable = recrHierarcyFunc(deepHierarcyList,managerid[0],level)
+       
+               
+    return hierarcyTable
+   
+mangerid = input("Enter the Manager name......")
+(main(mangerid))
